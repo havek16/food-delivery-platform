@@ -2,6 +2,7 @@
   "name": "@table-and-tomato/client",
   "version": "1.0.0",
   "private": true,
+  "description": "Table & Tomato customer storefront, restaurant dashboards, and admin UI",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

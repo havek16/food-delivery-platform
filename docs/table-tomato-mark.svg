@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="200" viewBox="0 0 920 200" role="img" aria-labelledby="title desc">
+  <title id="title">Table &amp; Tomato</title>
+  <desc id="desc">Table &amp; Tomato food delivery product wordmark</desc>
+  <rect width="920" height="200" rx="24" fill="#fbf8f4"/>
+  <circle cx="110" cy="100" r="57" fill="#e6532f"/>
+  <path d="M110 49c-7-17-25-20-35-13 5 13 17 20 35 19 18 1 30-6 35-19-10-7-28-4-35 13Z" fill="#335e45"/>
+  <path d="M79 97c0-19 14-33 31-33s31 14 31 33c0 22-15 39-31 39s-31-17-31-39Z" fill="#ef7652" opacity=".6"/>
+  <path d="M110 66v69M84 91l52 19M136 91l-52 19" stroke="#fff1e8" stroke-width="3" opacity=".8"/>
+  <text x="202" y="108" fill="#211c18" font-family="Arial, Helvetica, sans-serif" font-size="57" font-weight="750" letter-spacing="-2">table<tspan fill="#e6532f">&amp;</tspan>tomato</text>
+  <text x="207" y="148" fill="#786f68" font-family="Arial, Helvetica, sans-serif" font-size="17" letter-spacing="3.4">GOOD FOOD, RIGHT WHEN YOU WANT IT</text>
+</svg>

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Typecheck, test, and build
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://tabletomato:tabletomato@localhost:5432/table_tomato?schema=public
+      JWT_ACCESS_SECRET: test-access-secret-for-ci-minimum-thirty-two-characters
+      JWT_REFRESH_SECRET: test-refresh-secret-for-ci-minimum-thirty-two-characters
+      CSRF_SECRET: test-csrf-secret-for-ci-minimum-thirty-two-characters
+      ENCRYPTION_KEY: MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_replace_me
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install workspace dependencies
+        run: |
+          npm ci
+          npm ci --prefix server
+          npm ci --prefix client
+      - name: Generate Prisma client
+        run: npm run db:generate
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Run backend tests
+        run: npm test
+      - name: Build server and client
+        run: npm run build
