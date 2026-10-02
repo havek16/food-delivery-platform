@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, KeyRound } from "lucide-react";
 import { api, apiRoutes, ApiError, resetCsrf } from "@/lib/api";
 import type { User } from "@/lib/types";
@@ -11,7 +11,13 @@ import { Button } from "@/components/Button";
 import { useAuth } from "@/stores/auth";
 
 export default function LoginPage() {
+  return <Suspense fallback={<div className="site-shell" style={{ paddingTop: 80, textAlign: "center" }}>Loading sign in…</div>}><LoginForm /></Suspense>;
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedRole = searchParams.get("role");
   const setUser = useAuth((s) => s.setUser);
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +37,13 @@ export default function LoginPage() {
       if (res.mfaRequired && res.loginToken) {
         setMfaChallenge({ loginToken: res.loginToken });
       } else {
+        if (requestedRole === "admin" && res.user.role !== "SUPERADMIN") throw new Error("This account does not have administrator access.");
+        if (requestedRole === "owner" && res.user.role !== "MANAGER") throw new Error("This account does not have restaurant owner access.");
         setUser(res.user);
-        router.push("/account");
+        router.push(res.user.role === "SUPERADMIN" ? "/admin" : res.user.role === "MANAGER" ? "/owner" : "/account");
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Sign in failed.");
+      setError(err instanceof ApiError || err instanceof Error ? err.message : "Sign in failed.");
     } finally {
       setBusy(false);
     }
@@ -51,7 +59,7 @@ export default function LoginPage() {
       resetCsrf();
       router.push("/account");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Verification failed.");
+      setError(err instanceof ApiError || err instanceof Error ? err.message : "Verification failed.");
     } finally {
       setBusy(false);
     }
@@ -60,12 +68,12 @@ export default function LoginPage() {
   return (
     <div className="mx-auto flex min-h-[75vh] max-w-md flex-col justify-center px-4 py-16">
       <div className="glass rounded-[32px] p-8 shadow-float">
-        <p className="chip w-fit text-aura-700 dark:text-aura-300"><KeyRound size={12} /> Atelier access</p>
+          <p className="chip w-fit text-aura-700 dark:text-aura-300"><KeyRound size={12} /> {requestedRole === "admin" ? "Administrator access" : requestedRole === "owner" ? "Restaurant owner access" : "Customer account"}</p>
         <h1 className="mt-4 font-serif text-4xl text-ink dark:text-ivory">
           {mfaChallenge ? "Two-factor check" : "Welcome back."}
         </h1>
-        <p className="mt-1 text-sm text-ink/50 dark:text-ivory/50">
-          {mfaChallenge ? "Enter the one-time code from your authenticator app." : "Sign in to your private scent library."}
+          <p className="mt-1 text-sm text-ink/50 dark:text-ivory/50">
+            {mfaChallenge ? "Enter the one-time code from your authenticator app." : requestedRole === "admin" ? "Manage the Table & Tomato platform." : requestedRole === "owner" ? "Manage your restaurant and incoming orders." : "Order from your favorite local restaurants."}
         </p>
 
         {mfaChallenge ? (

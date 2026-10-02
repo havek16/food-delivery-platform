@@ -12,6 +12,7 @@ export function Navbar() {
       <button className="button-light" style={{ border: 0, padding: "8px 10px", marginRight: "auto" }}><MapPin size={16} color="#e6532f" /><span className="hidden sm:inline">Deliver to <b>Brooklyn, NY</b></span><ChevronDown size={14} /></button>
       <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
         <Link href="/restaurants" className="hidden sm:inline" style={{ color: "#57534e", fontSize: 14, fontWeight: 600 }}>Browse restaurants</Link>
+        <Link href="/owner/login" className="hidden md:inline" style={{ color: "#57534e", fontSize: 14, fontWeight: 600 }}>Partner login</Link>
         <Link href="/orders" aria-label="Orders" style={{ color: "#57534e" }}><UserRound size={19} /></Link>
         <Link href="/checkout" style={{ position: "relative", color: "#57534e" }}><ShoppingBag size={20} />{count > 0 && <span style={{ position: "absolute", right: -9, top: -9, minWidth: 18, height: 18, borderRadius: 12, background: "#e6532f", color: "#fff", fontSize: 11, display: "grid", placeItems: "center", fontWeight: 700 }}>{count}</span>}</Link>
       </div>
