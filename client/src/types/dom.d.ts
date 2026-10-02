@@ -1,0 +1,1 @@
+interface Element { value?: string }

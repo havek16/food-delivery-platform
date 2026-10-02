@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+client/.env.local
+server/.env
+
+# Build output
+client/.next/
+client/out/
+server/dist/
+coverage/
+
+# Secrets and certificates
+*.pem
+*.key
+*.p12
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Prisma
+prisma/dev.db*
+prisma/migrations/dev/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Temp
+*.tmp
+*.bak
+*.tsbuildinfo
+server/test-output.txt
+
+# Coverage
+coverage/

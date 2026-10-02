@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+  // Monorepo: emit next to the server's @prisma/client so compile + runtime
+  // resolution (relative to that package) both succeed.
+  output   = "../server/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MANAGER
+  SUPERADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum OlfactoryFamily {
+  WOODY
+  FLORAL
+  FRESH
+  ORIENTAL
+}
+
+enum Concentration {
+  PARFUM
+  EDP
+  EDT
+}
+
+enum GenderCategory {
+  WOMEN
+  MEN
+  UNISEX
+}
+
+enum ProductType {
+  SINGLE
+  GIFT_SET
+}
+
+enum NotePosition {
+  TOP
+  HEART
+  BASE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  NONE
+  REQUIRES_ACTION
+  REQUIRES_CAPTURE
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                      String       @id @default(cuid())
+  email                   String       @unique
+  emailVerified           Boolean      @default(false)
+  passwordHash            String
+  firstName               String
+  lastName                String
+  role                    Role         @default(USER)
+  status                  UserStatus   @default(ACTIVE)
+  mfaEnabled              Boolean      @default(false)
+  // Encrypted at rest via AES-256-GCM (utils/crypto.ts)
+  totpSecretEncrypted     String?
+  totpBackupCodesEncrypted String?
+  cartToken               String?      @unique
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  cartItems      CartItem[]
+  orders         Order[]
+  wishlistItems  WishlistItem[]
+  addresses      Address[]
+  auditLogs      AuditLog[] @relation("AuditActor")
+
+  @@index([role])
+  @@index([status])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String   @default("US")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Product {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  name         String
+  tagline      String
+  description  String
+  brand        String          @default("Aura & Essence")
+  family       OlfactoryFamily
+  concentration Concentration
+  gender       GenderCategory  @default(UNISEX)
+  type         ProductType     @default(SINGLE)
+  priceCents   Int
+  stock        Int             @default(0)
+  sizeMl       Int             @default(100)
+  images       String[]
+  isActive     Boolean         @default(true)
+  isFeatured   Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  notes      ProductNote[]
+  wishes     WishlistItem[]
+
+  @@index([family])
+  @@index([concentration])
+  @@index([isActive, isFeatured])
+}
+
+model OlfactoryNote {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  family   OlfactoryFamily
+  // 0-100 intensity weighting used by the Signature Scent quiz matcher
+  base      Int    @default(50)
+  products  ProductNote[]
+}
+
+model ProductNote {
+  id         String       @id @default(cuid())
+  productId  String
+  noteId     String
+  position   NotePosition
+  // 1-5 — prominence of this note inside the accord
+  intensity  Int          @default(3)
+
+  product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  note    OlfactoryNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, noteId])
+  @@index([noteId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String?
+  cartToken String?
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@unique([cartToken, productId])
+  @@index([cartToken])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  userId          String?
+  guestEmail      String?
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(NONE)
+  subtotalCents   Int
+  taxCents        Int
+  shippingCents   Int
+  totalCents      Int
+  currency        String        @default("usd")
+  stripePaymentIntentId String?  @unique
+  stripeCustomerId String?
+  shippingAddress Json
+  billingAddress  Json
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  fulfilledAt     DateTime?
+  deliveredAt     DateTime?
+
+  user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+}
+
+model OrderItem {
+  id           String       @id @default(cuid())
+  orderId      String
+  productId    String?
+  productName  String
+  productSlug  String?
+  concentration Concentration
+  sizeMl        Int
+  unitPriceCents Int
+  quantity     Int
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorRole  Role?
+  action     String
+  category   String   @default("general")
+  entityType String?
+  entityId   String?
+  result     String   @default("success")
+  ipAddress  String?
+  userAgent  String?
+  // Sensitive request payload is encrypted at rest, masked in logs
+  detailEncrypted String?
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
