@@ -18,6 +18,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedRole = searchParams.get("role");
+  const nextPath = searchParams.get("next");
   const setUser = useAuth((s) => s.setUser);
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,7 @@ function LoginForm() {
         if (requestedRole === "admin" && res.user.role !== "SUPERADMIN") throw new Error("This account does not have administrator access.");
         if (requestedRole === "owner" && res.user.role !== "MANAGER") throw new Error("This account does not have restaurant owner access.");
         setUser(res.user);
-        router.push(res.user.role === "SUPERADMIN" ? "/admin" : res.user.role === "MANAGER" ? "/owner" : "/account");
+        router.push(nextPath?.startsWith("/") ? nextPath : res.user.role === "SUPERADMIN" ? "/admin" : res.user.role === "MANAGER" ? "/owner" : "/account");
       }
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : "Sign in failed.");

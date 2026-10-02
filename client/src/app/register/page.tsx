@@ -41,7 +41,8 @@ export default function RegisterPage() {
       const res = await api<{ user: import("@/lib/types").User }>(apiRoutes.register, { method: "POST", body: form });
       setUser(res.user);
       resetCsrf();
-      router.push("/account");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next?.startsWith("/") ? next : "/account");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Registration failed.");
     } finally {
